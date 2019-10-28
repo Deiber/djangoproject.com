@@ -42,7 +42,7 @@ class ViewTests(TestCase):
     def test_metric_404(self):
         request = self.factory.get(reverse('metric-detail', args=['new-tickets-week'],
                                            host='dashboard'))
-        with self.assertRaisesRegex(Http404, 'Could not find metric with slug [\w-]+'):
+        with self.assertRaisesRegex(Http404, r'Could not find metric with slug [\w-]+'):
             metric_detail(request, '404')
 
     def test_metric_json(self):
@@ -54,7 +54,7 @@ class ViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
-class MetricMixin(object):
+class MetricMixin:
 
     def test_str(self):
         self.assertEqual(str(self.instance), self.instance.name)
@@ -79,7 +79,7 @@ class TracTicketMetricTestCase(TestCase, MetricMixin):
 
 class RSSFeedMetricTestCase(TestCase, MetricMixin):
     fixtures = ['dashboard_test_data']
-    feed_url = 'http://code.djangoproject.com/timeline?changeset=on&max=0&daysback=7&format=rss'
+    feed_url = 'https://code.djangoproject.com/timeline?changeset=on&max=0&daysback=7&format=rss'
     fixtures_path = os.path.join(os.path.dirname(__file__), 'fixtures', 'rss_feed_metric.xml')
 
     def setUp(self):

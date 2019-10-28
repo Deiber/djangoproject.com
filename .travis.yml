@@ -1,20 +1,16 @@
 sudo: no
-dist: trusty
+dist: xenial
 addons:
   postgresql: "9.5"
 language: python
 python:
   - "3.5"
-env:
-  - TOXENV=py35-tests
-  - TOXENV=py35-flake8
-  - TOXENV=py35-isort
 install:
   - pip install coveralls tox
 before_script:
-  - createuser -U postgres -d djangoproject
+  - createuser -U postgres -d djangoproject --superuser
   - createdb -U postgres -O djangoproject djangoproject
-  - createuser -U postgres -d code.djangoproject
+  - createuser -U postgres -d code.djangoproject --superuser
   - createdb -U postgres -O code.djangoproject code.djangoproject
   - psql -U postgres -d code.djangoproject < tracdb/trac.sql
 script:

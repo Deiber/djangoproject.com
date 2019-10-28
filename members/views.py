@@ -7,7 +7,7 @@ from django.views.generic.dates import timezone_today
 
 from .forms import CorporateMemberSignUpForm
 from .models import (
-    CORPORATE_MEMBERSHIP_AMOUNTS, CorporateMember, IndividualMember,
+    CORPORATE_MEMBERSHIP_AMOUNTS, CorporateMember, IndividualMember, Team,
 )
 
 
@@ -33,7 +33,7 @@ def corporate_member_list_view(request):
     })
 
 
-class CorporateMemberSignupMixin(object):
+class CorporateMemberSignupMixin:
     form_class = CorporateMemberSignUpForm
     model = CorporateMember
 
@@ -50,13 +50,21 @@ class CorporateMemberRenewView(CorporateMemberSignupMixin, UpdateView):
     def get_object(self):
         """
         Convert the token back to a pk and check that it's not older than
-        14 days.
+        30 days.
         """
         try:
-            pk = signing.loads(self.kwargs['token'], max_age=1.21e+6)
+            pk = signing.loads(self.kwargs['token'], max_age=2.592e+6)
         except signing.BadSignature:
             raise Http404(
                 "No %(verbose_name)s found matching the query" %
                 {'verbose_name': self.model._meta.verbose_name}
             )
         return self.get_queryset().get(pk=pk)
+
+
+class TeamsListView(ListView):
+    model = Team
+    context_object_name = 'teams'
+
+    def get_queryset(self):
+        return self.model.objects.prefetch_related('members').order_by('name')

@@ -14,7 +14,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from .exceptions import DonationError
-from .forms import DjangoHeroForm, DonationForm, PaymentForm
+from .forms import DjangoHeroForm, DonationForm, PaymentForm, ReCaptchaForm
 from .models import (
     LEADERSHIP_LEVEL_AMOUNT, DjangoHero, Donation, Payment, Testimonial,
 )
@@ -25,6 +25,20 @@ def index(request):
     return render(request, 'fundraising/index.html', {
         'testimonial': testimonial,
     })
+
+
+@require_POST
+def verify_captcha(request):
+    form = ReCaptchaForm(request.POST)
+
+    if form.is_valid():
+        data = {'success': True}
+    else:
+        data = {
+            'success': False,
+            'error': form.errors
+        }
+    return JsonResponse(data)
 
 
 @require_POST
@@ -80,6 +94,7 @@ def thank_you(request, donation):
 def manage_donations(request, hero):
     hero = get_object_or_404(DjangoHero, pk=hero)
     recurring_donations = hero.donation_set.exclude(stripe_subscription_id='')
+    past_payments = Payment.objects.filter(donation__donor=hero).select_related('donation')
 
     ModifyDonationsFormset = modelformset_factory(Donation, form=DonationForm, extra=0)
 
@@ -109,6 +124,7 @@ def manage_donations(request, hero):
         'hero_form': hero_form,
         'modify_donations_formset': modify_donations_formset,
         'recurring_donations': recurring_donations,
+        'past_payments': past_payments,
         'stripe_publishable_key': settings.STRIPE_PUBLISHABLE_KEY,
     })
 
@@ -121,7 +137,7 @@ def update_card(request):
         subscription = customer.subscriptions.retrieve(donation.stripe_subscription_id)
         subscription.source = request.POST['stripe_token']
         subscription.save()
-    except stripe.StripeError as e:
+    except stripe.error.StripeError as e:
         data = {'success': False, 'error': str(e)}
     else:
         data = {'success': True}
@@ -162,7 +178,7 @@ def receive_webhook(request):
     return WebhookHandler(event).handle()
 
 
-class WebhookHandler(object):
+class WebhookHandler:
     def __init__(self, event):
         self.event = event
 

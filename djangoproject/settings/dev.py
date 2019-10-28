@@ -1,11 +1,13 @@
 from .common import *  # noqa
 
 ALLOWED_HOSTS = [
-    'www.djangoproject.dev',
-    'djangoproject.dev',
-    'docs.djangoproject.dev',
-    'dashboard.djangoproject.dev',
+    'www.djangoproject.localhost',
+    'djangoproject.localhost',
+    'docs.djangoproject.localhost',
+    'dashboard.djangoproject.localhost',
 ] + SECRETS.get('allowed_hosts', [])
+
+LOCALE_MIDDLEWARE_EXCLUDED_HOSTS = ['docs.djangoproject.localhost']
 
 DEBUG = True
 THUMBNAIL_DEBUG = DEBUG
@@ -14,6 +16,10 @@ CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
         'LOCATION': 'trololololol',
+    },
+    'docs-pages': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'docs-pages',
     },
 }
 
@@ -32,7 +38,7 @@ DOCS_BUILD_ROOT = DATA_DIR.joinpath('djangodocs')
 
 # django-hosts settings
 
-PARENT_HOST = 'djangoproject.dev:8000'
+PARENT_HOST = 'djangoproject.localhost:8000'
 
 # django-push settings
 
@@ -52,3 +58,11 @@ if DEBUG:
             MIDDLEWARE.index('django.middleware.common.CommonMiddleware') + 1,
             'debug_toolbar.middleware.DebugToolbarMiddleware'
         )
+        MIDDLEWARE.insert(
+            MIDDLEWARE.index('debug_toolbar.middleware.DebugToolbarMiddleware') + 1,
+            'djangoproject.middleware.CORSMiddleware'
+        )
+
+
+# Disable for development only.
+SILENCED_SYSTEM_CHECKS = SILENCED_SYSTEM_CHECKS + ['captcha.recaptcha_test_key_error']

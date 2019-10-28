@@ -28,8 +28,6 @@ CACHE_MIDDLEWARE_SECONDS = 60 * 5  # 5 minutes
 
 CACHE_MIDDLEWARE_KEY_PREFIX = 'django'
 
-CSRF_COOKIE_HTTPONLY = True
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
@@ -37,6 +35,7 @@ DATABASES = {
         'USER': 'djangoproject',
         'HOST': SECRETS.get('db_host', ''),
         'PASSWORD': SECRETS.get('db_password', ''),
+        'PORT': SECRETS.get('db_port', ''),
     },
     'trac': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
@@ -44,6 +43,7 @@ DATABASES = {
         'USER': 'code.djangoproject',
         'HOST': SECRETS.get('trac_db_host', ''),
         'PASSWORD': SECRETS.get('trac_db_password', ''),
+        'PORT': SECRETS.get('trac_db_port', ''),
     }
 }
 
@@ -61,16 +61,19 @@ INSTALLED_APPS = [
     'contact',
     'dashboard',
     'docs.apps.DocsConfig',
+    'foundation',
     'legacy',
     'members',
     'releases',
     'svntogit',
     'tracdb',
     'fundraising',
+    'captcha',
 
     'registration',
     'django_hosts',
     'sorl.thumbnail',
+    'djmoney',
 
     'django.contrib.sites',
     'django.contrib.auth',
@@ -79,6 +82,7 @@ INSTALLED_APPS = [
     'django.contrib.flatpages',
     'django.contrib.humanize',
     'django.contrib.messages',
+    'django.contrib.postgres',
     'django.contrib.redirects',
     'django.contrib.sessions',
     'django.contrib.staticfiles',
@@ -138,12 +142,13 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django_hosts.middleware.HostsRequestMiddleware',
+    # Put LocaleMiddleware before SessionMiddleware to prevent the former from accessing the
+    # session and adding 'Vary: Cookie' to all responses.
+    'djangoproject.middleware.ExcludeHostsLocaleMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.locale.LocaleMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
     'django.contrib.redirects.middleware.RedirectFallbackMiddleware',
@@ -252,6 +257,10 @@ PUSH_CREDENTIALS = 'aggregator.utils.push_credentials'
 # SUPERFEEDR_CREDS is a 2 element list in the form of [email,secretkey]
 SUPERFEEDR_CREDS = SECRETS.get('superfeedr_creds')
 
+# Fastly credentials
+FASTLY_API_KEY = SECRETS.get('fastly_api_key')
+FASTLY_SERVICE_URL = SECRETS.get('fastly_service_url')
+
 # Stripe settings
 
 # only testing keys as fallback values here please!
@@ -265,6 +274,3 @@ THUMBNAIL_ALTERNATIVE_RESOLUTIONS = [2]
 # dashboard settings
 TRAC_RPC_URL = "https://code.djangoproject.com/rpc"
 TRAC_URL = "https://code.djangoproject.com/"
-
-# search settings
-ES_HOST = SECRETS.get('es_host', 'localhost:9200')

@@ -94,8 +94,12 @@ define(function() {
         mods.push('mod/messages');
     }
 
-    if (hasClass('snippet')) {
+    if (hasClass('code-block-caption') || hasClass('snippet')) {
         mods.push('mod/clippify');
+    }
+
+    if (hasClass('console-block')) {
+        mods.push('mod/console-tabs');
     }
 
     require(mods);
